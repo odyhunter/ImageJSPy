@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 from werkzeug import secure_filename
+from PIL import Image
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -27,13 +28,21 @@ def upload():
         filename = secure_filename(file.filename)
         # Move the file to upload folder
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        img = Image.open(os.path.join(app.config['UPLOAD_FOLDER'], filename)).convert('L')
+        img.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return redirect(url_for('uploaded_file',
                                 filename=filename))
 
-@app.route('/uploads/<filename>')
+@app.route('/show/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'],
-                               filename)
+    filename = 'http://127.0.0.1:5000/uploads/' + filename
+    return render_template('upload.html', filename=filename)
+
+@app.route('/uploads/<filename>')
+def send_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
 
 if __name__ == '__main__':
     app.run(
